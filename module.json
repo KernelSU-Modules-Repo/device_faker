@@ -1,0 +1,12 @@
+{
+    "metamodule": false,
+    "summary": "使用Zygisk实现自定义配置对应用伪装机型",
+    "sourceUrl": "https://github.com/Seyud/device_faker",
+    "additionalAuthors": [
+        {
+            "type": "add",
+            "name": "Seyud",
+            "link": "https://github.com/Seyud"
+        }
+    ]
+}
