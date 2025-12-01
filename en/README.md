@@ -2,7 +2,7 @@
 
 # Device Faker 📱
 
-<img src="../logo.png" style="width: 96px;" alt="logo">
+<img src="https://raw.githubusercontent.com/KernelSU-Modules-Repo/device_faker/main/logo.png" style="width: 96px;" alt="logo">
 
 A device model spoofing module based on Zygisk that can configure different device models for different applications.
 
