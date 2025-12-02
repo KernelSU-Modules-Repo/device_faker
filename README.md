@@ -35,7 +35,7 @@ Device Faker 提供了现代化的 Web 管理界面，可以通过WebUI-X API访
 
 ## 配置说明 ⚙️
 
-详细的配置说明请参考 [配置文档](CONFIG.md)。
+详细的配置说明请参考 [配置文档](https://github.com/KernelSU-Modules-Repo/device_faker/blob/main/CONFIG.md)。
 
 配置文件位于 `/data/adb/device_faker/config/config.toml`，使用 TOML 格式。修改配置后仅需重启对应应用即可生效，无需重启系统。
 

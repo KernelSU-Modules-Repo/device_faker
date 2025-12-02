@@ -35,7 +35,7 @@ Device Faker provides a modern web management interface accessible through the W
 
 ## Configuration Guide ⚙️
 
-For detailed configuration instructions, please refer to the [Configuration Documentation](CONFIG.md).
+For detailed configuration instructions, please refer to the [Configuration Documentation](https://github.com/KernelSU-Modules-Repo/device_faker/blob/main/CONFIG.md).
 
 The configuration file is located at `/data/adb/device_faker/config/config.toml` and uses TOML format. After modifying the configuration, just restart the corresponding application to take effect, no need to restart the system.
 
