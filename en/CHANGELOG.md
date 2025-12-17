@@ -1,6 +1,27 @@
 # 📝 Changelog
 
-## ⬆️[v1.1.0] - 2025-11-09
+## ⬆️[v1.1.0 → v1.2.0] - 2025-12-17
+
+### 🆕 New Features
+- 🌐 WebUI added online template library feature
+- 🛠️ Added CLI tool for configuration conversion and online template loading
+- 🔧 Added resetprop mode support and characteristics property
+- 🌍 WebUI added multi-language support
+- 📋 Added FORCE_DENYLIST_UNMOUNT support
+- 👥 Added support for multi-user environment configuration
+
+### ⚡ Improvements
+- 💾 Installation script changed backup file suffix to .bak for easier recovery
+- 📱 WebUI adapted KernelSU API 2.1.1 to support KernelSU 2.1.2+ app name and icon display
+- 🎨 Adapted KernelSU WebUI immersion standard
+- 🌐 WebUI used fetch API instead of curl command for network requests, improving compatibility
+- 🏗️ Modular architecture refactored Zygisk module core
+- 🎨 Optimized WebUI display and layout
+- 🏗️ Refactored WebUI template page to component-based structure
+- 🔄 Migrated C++ atexit implementation to Rust implementation
+- 📋 WebUI added configuration metadata support
+
+## ⬆️[v1.0.5 → v1.1.0] - 2025-11-09
 
 ### 🆕 New Features
 - 🌐 Added WebUI interface for more friendly configuration management experience
@@ -12,7 +33,7 @@
 - 🔧 Updated Rust edition to 2024 version, utilizing latest language features
 - 📚 Optimized configuration documentation structure, improving readability and usability
 
-## ⬆️[v1.0.5] - 2025-11-04
+## ⬆️[v1.0.0 → v1.0.5] - 2025-11-04
 
 ### 🆕 New Features
 - 📱 Added device template configuration for convenient application to multiple package names

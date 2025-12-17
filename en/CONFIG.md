@@ -16,20 +16,30 @@ default_mode = "lite"  # Recommended: lightweight mode (better stealth)
 
 **Available values**:
 - `"lite"` - Lightweight mode (recommended) ⭐
-  - Only modifies Build class static fields
-  - Unloads module after completion
-  - Harder to detect
-  - Suitable for 90% of applications
+    - Only modifies Build class static fields
+    - Unloads module after completion
+    - Harder to detect
+    - Suitable for 90% of applications
 
 - `"full"` - Full mode
-  - Modifies Build class + spoofs SystemProperties
-  - Module stays in memory
-  - May be detected
-  - Only use when lite mode is insufficient
+    - Modifies Build class + spoofs SystemProperties
+    - Module stays in memory
+    - May be detected
+    - Only use when lite mode is insufficient
 
 - `"resetprop"` - Resetprop mode
-  - Uses resetprop tool to modify properties
-  - Supports modifying read-only properties (such as `ro.build.characteristics`)
+    - Uses resetprop tool to modify properties
+    - Supports modifying read-only properties (such as `ro.build.characteristics`)
+    - Automatically backs up original values via `getprop` before applying changes and restores them with resetprop when the target app exits or you switch to another app
+
+### default_force_denylist_unmount (Global Default for Unmounting Module Mounts)
+
+```toml
+# Default false: enable only for sensitive apps
+default_force_denylist_unmount = false
+```
+
+**Description**: Enables Zygisk `FORCE_DENYLIST_UNMOUNT` for target apps to force-unmount module mount points. You can enable it globally or override in templates / per-app entries.
 
 ### debug (Debug Mode)
 
@@ -45,6 +55,12 @@ debug = true  # Enable detailed logging (for debugging)
 
 ## Editing Configuration
 
+> Multi-user note: you can append `@userId` after a package name to apply settings only for a specific Android user.
+>
+> - `userId` is the number in `/data/user/<userId>/...` (e.g. `0`, `999`)
+> - Match order: try `com.example.app@userId` first, then fall back to `com.example.app`
+> - Works in both `apps[].package` and templates' `packages` list
+
 ### Method One: Device Templates
 
 Define a `packages` list in the template, automatically apply to all package names:
@@ -54,6 +70,8 @@ Define a `packages` list in the template, automatically apply to all package nam
 [templates.redmagic_9_pro]
 packages = [
     "com.mobilelegends.mi",
+    # Only for userId=999
+    # "com.mobilelegends.mi@999",
     "com.supercell.brawlstars",
     "com.blizzard.diablo.immortal",
 ]
@@ -150,6 +168,20 @@ model = "SM-S9280"
 | `name` | ❌ | `ro.product.name` + `ro.product.device` | Code name (e.g.: xuanyuan) |
 | `marketname` | ❌ | `ro.product.marketname` | Model name (e.g.: REDMI K90 Pro Max) |
 | `characteristics` | ❌ | `ro.build.characteristics` | Characteristics (e.g.: tablet) - only effective in resetprop mode |
+| `force_denylist_unmount` | N/A | N/A | Whether to force-unmount module mount points for this app; falls back to `default_force_denylist_unmount` when unspecified |
+
+**Configuration Metadata Fields** (display only, does not affect spoofing):
+| Field | Description |
+|-------|-------------|
+| `version` | Configuration version (e.g.: "v1.0") |
+| `version_code` | Configuration version code (e.g.: 20251212) |
+| `author` | Configuration author |
+| `description` | Configuration description |
+
+**About `force_denylist_unmount`**:
+- Can be set globally (`default_force_denylist_unmount`), in templates, or per `[[apps]]`.
+- Priority: per-app > template > global default.
+- Use for sensitive apps (e.g., WeChat); recommended to enable only where needed instead of globally.
 
 **Notes**:
 - All fields except `package` are optional

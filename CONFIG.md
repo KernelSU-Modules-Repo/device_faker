@@ -30,6 +30,16 @@ default_mode = "lite"  # 推荐：轻量模式（隐藏性更好）
 - `"resetprop"` - Resetprop 模式
   - 使用 resetprop 工具修改属性
   - 支持修改只读属性（如 `ro.build.characteristics`）
+  - 在应用进入 resetprop 模式前会用 `getprop` 备份原始值，退出或切换到其它应用后由守护进程用 resetprop 自动还原
+
+### default_force_denylist_unmount（全局默认卸载挂载点）
+
+```toml
+# 默认 false：仅在需要的应用上开启
+default_force_denylist_unmount = false
+```
+
+**说明**：为目标应用启用 Zygisk 的 `FORCE_DENYLIST_UNMOUNT`，强制卸载模块挂载痕迹。可在全局开启，也可在模板 / 单个应用里覆盖。
 
 ### debug（调试模式）
 
@@ -45,6 +55,12 @@ debug = true  # 启用详细日志（用于调试）
 
 ## 编辑配置
 
+> 多用户说明：支持在包名后追加 `@userId` 来只对指定用户生效。
+> 
+> - `userId` 对应路径 `/data/user/<userId>/...` 中的数字（例如 `0`、`999`）
+> - 匹配优先级：先匹配 `com.example.app@userId`，找不到再回退匹配 `com.example.app`
+> - 该写法同时适用于 `apps` 里的 `package` 和模板的 `packages` 列表
+
 ### 方式一：机型模板
 
 在模板中定义 `packages` 列表，自动应用到所有包名：
@@ -54,6 +70,8 @@ debug = true  # 启用详细日志（用于调试）
 [templates.redmagic_9_pro]
 packages = [
     "com.mobilelegends.mi",
+  # 仅对 userId=999 生效
+  # "com.mobilelegends.mi@999",
     "com.supercell.brawlstars",
     "com.blizzard.diablo.immortal",
 ]
@@ -150,6 +168,20 @@ model = "SM-S9280"
 | `name` | ❌ | `ro.product.name` + `ro.product.device` | 代号 (如: xuanyuan) |
 | `marketname` | ❌ | `ro.product.marketname` | 型号 (如: REDMI K90 Pro Max) |
 | `characteristics` | ❌ | `ro.build.characteristics` | 特性 (如: tablet) - 仅 resetprop 模式生效 |
+| `force_denylist_unmount` | N/A | N/A | 是否对该应用强制卸载模块挂载点；未指定时使用 `default_force_denylist_unmount` |
+
+**配置元数据字段**（仅用于显示，不影响伪装效果）:
+| 字段 | 说明 |
+|------|------|
+| `version` | 配置版本号 (如: "v1.0") |
+| `version_code` | 配置版本码 (如: 20251212) |
+| `author` | 配置作者 |
+| `description` | 配置描述信息 |
+
+**关于 `force_denylist_unmount`**：
+- 可写在全局（`default_force_denylist_unmount`）、模板或单个 `[[apps]]`。
+- 优先级：单个应用 > 模板 > 全局默认。
+- 适合微信等敏感 App，建议按需开启而非全局强开。
 
 **注意**:
 - 除了 `package` 外,所有字段都是可选的

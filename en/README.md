@@ -10,7 +10,6 @@ A device model spoofing module based on Zygisk that can configure different devi
 [![GitHub Downloads](https://img.shields.io/github/downloads/KernelSU-Modules-Repo/Device_Faker/total?logo=github&logoColor=green)](https://github.com/KernelSU-Modules-Repo/Device_Faker/releases)
 [![Language](https://img.shields.io/badge/language-Rust-orange?logo=rust&logoColor=orange)](https://www.rust-lang.org/)
 [![Telegram](https://img.shields.io/badge/chat-Device_Faker-2CA5E0?logo=telegram&logoColor=87CEEB)](https://t.me/device_faker)
-[![QQ群](https://img.shields.io/badge/QQ群-854188252-12B7F5?logo=qq&logoColor=white)](https://qun.qq.com/universal-share/share?ac=1&authKey=ls4nlfcsF%2Bxp5SPnVsXRgpbeV1axPZb%2FmJCMXms6ZCHjgAwvOyl1LV%2BDNVL1btgL&busi_data=eyJncm91cENvZGUiOiI4NTQxODgyNTIiLCJ0b2tlbiI6IlE1WVVyZTZxUXVjZUtGUUxWSGFmbzkvMEd3UWNRSiszdklTZDhHejU0RDRyT0lWRTFqS3d4UGJSM1ltaXpkS3MiLCJ1aW4iOiIxMTA1NzgzMDMzIn0%3D&data=IbvhTKt9HwCSsCsl_610-rQ8p6H2NgLmxhEKkMcn-BMWPb86jygWBZJfWLQGm7J8LwpVV2yhPafxTMXYGkjRVA&svctype=4&tempid=h5_group_info)
 
 ## Features ✨
 
@@ -20,7 +19,7 @@ A device model spoofing module based on Zygisk that can configure different devi
 - 🛡️ **Safe and Reliable**: Based on Zygisk framework, modular design
 - 📝 **Simple Configuration**: Using TOML format configuration files, easy to edit
 - ⚡ **Performance Optimized**: Only takes effect on configured applications, does not affect other applications
-- 🎭 **Dual Mode**: lite mode (lightweight stealth) / full mode (complete spoofing)
+- 🎭 **Triple Mode**: lite mode (lightweight stealth) / full mode (complete spoofing) / resetprop mode (supports read-only property modification)
 - 🌐 **WebUI Management**: Provides graphical interface for convenient configuration management
 
 ## WebUI Features 🖥️
@@ -31,7 +30,6 @@ Device Faker provides a modern web management interface accessible through the W
 - 📋 **Template Management**: Create, edit and delete device templates, batch apply to multiple package names
 - 📱 **Application Management**: Intuitive view of installed applications and their configuration status
 - 🖋️ **Configuration Editing**: Graphical interface for editing application configuration, supporting template application and custom configuration
-- 🔍 **Search Function**: Quick search for applications or package names
 
 ## Configuration Guide ⚙️
 
@@ -45,7 +43,7 @@ This project references the following excellent projects during development:
 
 - [zygisk-dump-dex](https://github.com/ri-char/zygisk-dump-dex) - Provides prototype reference for Rust Zygisk module development
 - [zygisk-api-rs](https://github.com/rmnscnce/zygisk-api-rs) - Provides Rust dependency support for Zygisk API
-- [MiPushZygisk](https://github.com/wushidia/MiPushZygisk) and [COPG](https://github.com/AlirezaParsi/COPG#) - Provides reference for Zygisk device spoofing solutions
+- [MiPushZygisk](https://github.com/wushidia/MiPushZygisk) - Provides reference for Zygisk device spoofing solutions
 
 Thanks to the developers of these projects! 💖
 
