@@ -11,7 +11,6 @@
 
 ```toml
 default_mode = "lite"  # 推荐：轻量模式（隐藏性更好）
-# default_mode = "full"  # 完整模式（可能被检测）
 ```
 
 **可选值**：
@@ -29,7 +28,8 @@ default_mode = "lite"  # 推荐：轻量模式（隐藏性更好）
 
 - `"resetprop"` - Resetprop 模式
   - 使用 resetprop 工具修改属性
-  - 支持修改只读属性（如 `ro.build.characteristics`）
+  - 支持修改只读属性
+  - 支持自定义属性和属性置空/删除
   - 在应用进入 resetprop 模式前会用 `getprop` 备份原始值，退出或切换到其它应用后由守护进程用 resetprop 自动还原
 
 ### default_force_denylist_unmount（全局默认卸载挂载点）
@@ -167,8 +167,22 @@ model = "SM-S9280"
 | `fingerprint` | `Build.FINGERPRINT` | + `ro.build.fingerprint` | 指纹 |
 | `name` | ❌ | `ro.product.name` + `ro.product.device` | 代号 (如: xuanyuan) |
 | `marketname` | ❌ | `ro.product.marketname` | 型号 (如: REDMI K90 Pro Max) |
-| `characteristics` | ❌ | `ro.build.characteristics` | 特性 (如: tablet) - 仅 resetprop 模式生效 |
+| `characteristics` | ❌ | `ro.build.characteristics` | 特性 (如: tablet) - 仅 full 模式生效 |
+| `android_version` | `Build.VERSION.RELEASE` | + `ro.build.version.release` 等 | Android 版本号 (如: 15, 14) |
+| `sdk_int` | `Build.VERSION.SDK_INT` | + `ro.build.version.sdk` 等 | SDK 版本号 (如: 35, 34) |
+| `custom_props` | ❌ | ✅ | 自定义属性映射表 |
 | `force_denylist_unmount` | N/A | N/A | 是否对该应用强制卸载模块挂载点；未指定时使用 `default_force_denylist_unmount` |
+
+**Android 版本伪装字段**（新增）:
+| 字段 | 说明 | 示例 |
+|------|------|------|
+| `android_version` | Android 版本号，所有模式都支持 | `"15"`, `"14"`, `"13"` |
+| `sdk_int` | SDK 版本号，所有模式都支持 | `35`, `34`, `33` |
+
+**自定义属性字段**（新增）:
+| 字段 | 说明 |
+|------|------|
+| `custom_props` | 自定义属性映射表，仅 full/resetprop 模式支持 |
 
 **配置元数据字段**（仅用于显示，不影响伪装效果）:
 | 字段 | 说明 |
@@ -189,8 +203,93 @@ model = "SM-S9280"
 - [[apps]] 中的字段会覆盖模板的配置
 - `name` 和 `marketname` 仅在 **full 模式**下有效(影响 SystemProperties)
 - `name` 字段在 full 模式下会同时伪装 `ro.product.name` 和 `ro.product.device`
-- `characteristics` 字段仅在 **resetprop 模式**下生效
-- **lite 模式**下,只有 `manufacturer`、`brand`、`model`、`device`、`product`、`fingerprint` 生效
+- `characteristics` 字段仅在 **full 模式**下生效
+- `android_version` 和 `sdk_int` 在**所有模式**下都生效
+- **lite 模式**下,只有 `manufacturer`、`brand`、`model`、`device`、`product`、`fingerprint`、`android_version`、`sdk_int` 生效
+
+## Android 版本伪装（新增功能）
+
+所有模式都支持 Android 版本和 SDK 版本伪装：
+
+```toml
+# 模板示例：伪装为 Android 15
+[templates.android_15]
+packages = ["com.app.needs.android15"]
+manufacturer = "Google"
+brand = "google"
+model = "Pixel 9 Pro"
+android_version = "15"
+sdk_int = 35
+
+# 应用示例：伪装为旧版 Android
+[[apps]]
+package = "com.needs.old.android"
+mode = "lite"  # lite 模式也支持！
+android_version = "13"
+sdk_int = 33
+```
+
+**版本伪装会修改的属性**：
+
+| 模式 | Build.VERSION 字段 | 系统属性 |
+|------|-------------------|----------|
+| lite | `RELEASE`, `SDK_INT` | ❌ |
+| full | `RELEASE`, `SDK_INT` | `ro.build.version.release`, `ro.build.version.sdk` 等 |
+| resetprop | `RELEASE`, `SDK_INT` | `ro.build.version.release`, `ro.build.version.sdk` 等 |
+
+**完整的系统属性列表**（full/resetprop 模式）：
+- `ro.build.version.release`
+- `ro.system.build.version.release`
+- `ro.vendor.build.version.release`
+- `ro.product.build.version.release`
+- `ro.build.version.sdk`
+- `ro.system.build.version.sdk`
+- `ro.vendor.build.version.sdk`
+- `ro.product.build.version.sdk`
+
+## 自定义属性（新增功能）
+
+**full/resetprop 模式** 都支持自定义属性，可以设置任意系统属性：
+
+```toml
+[[apps]]
+package = "com.custom.app"
+mode = "resetprop"
+manufacturer = "Custom"
+
+# 自定义属性
+[apps.custom_props]
+"ro.custom.property" = "custom_value"
+"ro.another.prop" = "another_value"
+```
+
+### 特殊标记值
+
+支持使用特殊标记值来执行特殊操作：
+
+| 标记值 | 含义 | 示例 |
+|--------|------|------|
+| 普通字符串 | 设置为该值 | `"ro.prop" = "value"` |
+| `""` 或省略 | 不修改（保持原值） | `brand = ""` |
+| `"__EMPTY__"` | 设置为空字符串 | `brand = "__EMPTY__"` |
+| `"__DELETE__"` | 删除该属性 | `model = "__DELETE__"` |
+
+**示例**：
+
+```toml
+[[apps]]
+package = "com.example.app"
+mode = "resetprop"
+manufacturer = "Google"
+brand = "__EMPTY__"           # 将 brand 设置为空字符串
+model = "__DELETE__"          # 删除 model 属性
+
+# 自定义属性也支持特殊标记
+[apps.custom_props]
+"ro.custom.flag" = "enabled"
+"ro.debug.mode" = "__DELETE__"
+"ro.empty.value" = "__EMPTY__"
+```
 
 ## 模式对比
 
@@ -198,19 +297,18 @@ model = "SM-S9280"
 |------|-------------|-----------|----------------|
 | Build 类伪装 | ✅ | ✅ | ✅ |
 | SystemProperties 伪装 | ❌ | ✅ | ✅ |
+| characteristics 伪装 | ❌ | ✅ | ❌ |
 | 只读属性修改 | ❌ | ❌ | ✅ |
+| 自定义属性 | ❌ | ✅ | ✅ |
+| 属性置空/删除 | ❌ | ✅ | ✅ |
+| Android 版本伪装 | ✅ | ✅ | ✅ |
+| SDK 版本伪装 | ✅ | ✅ | ✅ |
 | 模块可卸载 | ✅ | ❌ | ❌ |
-| 隐蔽性 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
+| 隐蔽性 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
 | 被检测风险 | 极低 | 较低 | 较低 |
-| 推荐度 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
+| 推荐度 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
 
 ## 如何选择模式？
-
-### 推荐策略
-
-1. **默认使用 lite 模式** - 覆盖 90% 的场景
-2. **测试应用** - 看是否能正常使用
-3. **如果不行** - 再改用 full 模式
 
 ### 判断依据
 
@@ -222,7 +320,10 @@ model = "SM-S9280"
 **使用 full 模式**：
 - 应用会读取 SystemProperties
 - lite 模式下仍能检测到真实机型
-- 不在乎被检测到模块
+- 需要伪装 characteristics（如 QQ 平板模式）
+- 需要自定义属性
 
 **使用 resetprop 模式**：
-- 需要修改 `ro.build.characteristics` (如 QQ 平板模式)
+- 需要修改只读属性
+- 需要删除或置空某些属性
+- 需要完整的自定义属性支持

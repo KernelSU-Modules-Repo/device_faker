@@ -10,68 +10,68 @@ The configuration file uses TOML format.
 ### default_mode (Global Default Mode)
 
 ```toml
-default_mode = "lite"  # Recommended: lightweight mode (better stealth)
-# default_mode = "full"  # Full mode (may be detected)
+default_mode = "lite"  # Recommended: Lite mode (better stealth)
 ```
 
 **Available values**:
-- `"lite"` - Lightweight mode (recommended) ⭐
-    - Only modifies Build class static fields
-    - Unloads module after completion
-    - Harder to detect
-    - Suitable for 90% of applications
+- `"lite"` - Lite mode (Recommended) ⭐
+  - Only modifies Build class static fields
+  - Unloads module after completion
+  - Hard to detect
+  - Suitable for 90% of apps
 
 - `"full"` - Full mode
-    - Modifies Build class + spoofs SystemProperties
-    - Module stays in memory
-    - May be detected
-    - Only use when lite mode is insufficient
+  - Modifies Build class + Spoofs SystemProperties
+  - Module stays in memory
+  - May be detected
+  - Use only when lite is insufficient
 
 - `"resetprop"` - Resetprop mode
-    - Uses resetprop tool to modify properties
-    - Supports modifying read-only properties (such as `ro.build.characteristics`)
-    - Automatically backs up original values via `getprop` before applying changes and restores them with resetprop when the target app exits or you switch to another app
+  - Uses resetprop tool to modify properties
+  - Supports modifying read-only properties
+  - Supports custom properties and property emptying/deletion
+  - Before an app enters resetprop mode, `getprop` is used to backup original values; the daemon automatically restores them using resetprop after exiting or switching to another app
 
-### default_force_denylist_unmount (Global Default for Unmounting Module Mounts)
+### default_force_denylist_unmount (Global Default Unmount Denylist)
 
 ```toml
-# Default false: enable only for sensitive apps
+# Default false: Only enable for needed apps
 default_force_denylist_unmount = false
 ```
 
-**Description**: Enables Zygisk `FORCE_DENYLIST_UNMOUNT` for target apps to force-unmount module mount points. You can enable it globally or override in templates / per-app entries.
+**Description**: Enables Zygisk's `FORCE_DENYLIST_UNMOUNT` for target apps, forcibly unmounting module mount traces. Can be enabled globally, or overridden in templates/single apps.
 
 ### debug (Debug Mode)
 
 ```toml
-debug = true  # Enable detailed logging (for debugging)
+debug = true  # Enable verbose logging (for debugging)
 # debug = false  # Or delete this line, default off (normal use)
 ```
 
 **Description**:
-- When enabled, outputs detailed Info level logs
-- When disabled, only outputs Error level logs
-- Recommended to disable for normal use to improve stealth
+- Enabling outputs detailed Info level logs
+- Disabling only outputs Error level logs
+- Recommended to disable during normal use to improve stealth
 
 ## Editing Configuration
 
-> Multi-user note: you can append `@userId` after a package name to apply settings only for a specific Android user.
+> Multi-user Note: Supports appending `@userId` to package names to target specific users only.
 >
-> - `userId` is the number in `/data/user/<userId>/...` (e.g. `0`, `999`)
-> - Match order: try `com.example.app@userId` first, then fall back to `com.example.app`
-> - Works in both `apps[].package` and templates' `packages` list
+> - `userId` corresponds to the number in path `/data/user/<userId>/...` (e.g., `0`, `999`)
+> - Matching priority: Matches `com.example.app@userId` first, falls back to `com.example.app` if not found
+> - This syntax applies to both `package` in `apps` and `packages` list in templates
 
 ### Method One: Device Templates
 
-Define a `packages` list in the template, automatically apply to all package names:
+Define a `packages` list in the template to automatically apply to all package names:
 
 ```toml
 # Define template and list package names
 [templates.redmagic_9_pro]
 packages = [
     "com.mobilelegends.mi",
-    # Only for userId=999
-    # "com.mobilelegends.mi@999",
+  # Only effective for userId=999
+  # "com.mobilelegends.mi@999",
     "com.supercell.brawlstars",
     "com.blizzard.diablo.immortal",
 ]
@@ -96,13 +96,13 @@ fingerprint = "google/marlin/marlin:10/QP1A.191005.007.A3/5972272:user/release-k
 ```
 
 **Advantages**:
-- ✅ Centralized management of device models and package names
-- ✅ No need to repeatedly write [[apps]]
-- ✅ Clear at a glance which applications use which template
+- ✅ Centralized management of devices and package names
+- ✅ No need to repeat [[apps]]
+- ✅ Immediately see which apps use which template
 
 ### Method Two: Direct Configuration
 
-Use [[apps]] to specify device information for individual applications:
+Use [[apps]] to specify device information for individual apps:
 
 ```toml
 [[apps]]
@@ -112,8 +112,8 @@ brand = "Xiaomi"
 model = "2509FPN0BC"
 device = "Xiaomi 15 Pro"
 product = "popsicle"
-name = "popsicle"  # Product internal name (only effective in full mode)
-mode = "full"  # Optional: override global mode
+name = "popsicle"  # Product internal name (full mode only)
+mode = "full"  # Optional: Override global mode
 
 [[apps]]
 package = "com.coolapk.market"
@@ -125,10 +125,10 @@ model = "A024"
 
 **Advantages**:
 - ✅ Flexible configuration
-- ✅ Suitable for one-time configuration or template override
+- ✅ Suitable for one-time configuration or overriding templates
 
-**Template Override**:
-If a package name is both in the template's `packages` list and has [[apps]] configuration, [[apps]] takes priority:
+**Overriding Templates**:
+If a package name is in a template's `packages` and also has [[apps]] configuration, [[apps]] takes priority:
 
 ```toml
 [templates.redmagic_9_pro]
@@ -139,90 +139,191 @@ manufacturer = "ZTE"
 model = "NX769J"
 
 [[apps]]
-package = "com.mobilelegends.mi"  # Overrides template configuration
+package = "com.mobilelegends.mi"  # Override template configuration
 manufacturer = "Samsung"
 model = "SM-S9280"
 ```
 
 **Field Priority**:
 ```
-[[apps]] direct configuration > template packages list > global default_mode
+[[apps]] Direct Config > Template packages list > Global default_mode
 ```
 
 **Mode Priority**:
 ```
-[[apps]].mode > [templates].mode > global default_mode
+[[apps]].mode > [templates].mode > Global default_mode
 ```
 
-### Application Configuration Field Description
+### App Configuration Field Description
 
-**Field and System Property Mapping Relationship**:
-| Field | lite Mode | full Mode (SystemProperties) | Description |
-|-------|----------|------------------------------|-------------|
-| `manufacturer` | `Build.MANUFACTURER` | + `ro.product.manufacturer` | Manufacturer (e.g.: Xiaomi, Samsung) |
-| `brand` | `Build.BRAND` | + `ro.product.brand` | Brand (e.g.: Redmi, nubia) |
-| `model` | `Build.MODEL` | + `ro.product.model` | Model (e.g.: 25010PN30C, NX769J) |
-| `device` | `Build.DEVICE` | (Build fields only) | Code name (e.g.: xuanyuan, NX769J) |
-| `product` | `Build.PRODUCT` | (Build fields only) | Code name (e.g.: xuanyuan, NX769J) |
+**Field to System Property Mapping**:
+| Field | Lite Mode | Full Mode (SystemProperties) | Description |
+|------|----------|------------------------------|------|
+| `manufacturer` | `Build.MANUFACTURER` | + `ro.product.manufacturer` | Manufacturer (e.g., Xiaomi, Samsung) |
+| `brand` | `Build.BRAND` | + `ro.product.brand` | Brand (e.g., Redmi, nubia) |
+| `model` | `Build.MODEL` | + `ro.product.model` | Model Number (e.g., 25010PN30C, NX769J) |
+| `device` | `Build.DEVICE` | (Build fields only) | Codename (e.g., xuanyuan, NX769J) |
+| `product` | `Build.PRODUCT` | (Build fields only) | Codename (e.g., xuanyuan, NX769J) |
 | `fingerprint` | `Build.FINGERPRINT` | + `ro.build.fingerprint` | Fingerprint |
-| `name` | ❌ | `ro.product.name` + `ro.product.device` | Code name (e.g.: xuanyuan) |
-| `marketname` | ❌ | `ro.product.marketname` | Model name (e.g.: REDMI K90 Pro Max) |
-| `characteristics` | ❌ | `ro.build.characteristics` | Characteristics (e.g.: tablet) - only effective in resetprop mode |
-| `force_denylist_unmount` | N/A | N/A | Whether to force-unmount module mount points for this app; falls back to `default_force_denylist_unmount` when unspecified |
+| `name` | ❌ | `ro.product.name` + `ro.product.device` | Codename (e.g., xuanyuan) |
+| `marketname` | ❌ | `ro.product.marketname` | Marketing Name (e.g., REDMI K90 Pro Max) |
+| `characteristics` | ❌ | `ro.build.characteristics` | Characteristics (e.g., tablet) - Full mode only |
+| `android_version` | `Build.VERSION.RELEASE` | + `ro.build.version.release` etc. | Android Version (e.g., 15, 14) |
+| `sdk_int` | `Build.VERSION.SDK_INT` | + `ro.build.version.sdk` etc. | SDK Version (e.g., 35, 34) |
+| `custom_props` | ❌ | ✅ | Custom property mapping table |
+| `force_denylist_unmount` | N/A | N/A | Whether to forcibly unmount module mount points for this app; uses `default_force_denylist_unmount` if not specified |
 
-**Configuration Metadata Fields** (display only, does not affect spoofing):
+**Android Version Spoofing Fields** (New):
+| Field | Description | Example |
+|------|------|------|
+| `android_version` | Android version number, supported by all modes | `"15"`, `"14"`, `"13"` |
+| `sdk_int` | SDK version number, supported by all modes | `35`, `34`, `33` |
+
+**Custom Properties Fields** (New):
 | Field | Description |
-|-------|-------------|
-| `version` | Configuration version (e.g.: "v1.0") |
-| `version_code` | Configuration version code (e.g.: 20251212) |
+|------|------|
+| `custom_props` | Custom property mapping table, full/resetprop modes only |
+
+**Configuration Metadata Fields** (Display only, does not affect spoofing):
+| Field | Description |
+|------|------|
+| `version` | Configuration version (e.g., "v1.0") |
+| `version_code` | Configuration version code (e.g., 20251212) |
 | `author` | Configuration author |
 | `description` | Configuration description |
 
 **About `force_denylist_unmount`**:
-- Can be set globally (`default_force_denylist_unmount`), in templates, or per `[[apps]]`.
-- Priority: per-app > template > global default.
-- Use for sensitive apps (e.g., WeChat); recommended to enable only where needed instead of globally.
+- Can be written globally (`default_force_denylist_unmount`), in templates, or in single `[[apps]]`.
+- Priority: Single app > Template > Global default.
+- Suitable for sensitive apps like WeChat, recommended to enable on-demand rather than globally forcing.
 
-**Notes**:
-- All fields except `package` are optional
-- When using template's `packages`, no need to write [[apps]] (automatically applied)
-- Fields in [[apps]] will override template configuration
-- `name` and `marketname` are only effective in **full mode** (affect SystemProperties)
-- `name` field in full mode will simultaneously spoof `ro.product.name` and `ro.product.device`
-- `characteristics` field is only effective in **resetprop mode**
-- In **lite mode**, only `manufacturer`, `brand`, `model`, `device`, `product`, `fingerprint` take effect
+**Note**:
+- All fields are optional except `package`
+- When using template's `packages`, no need to write [[apps]] (automatic application)
+- Fields in [[apps]] override template configuration
+- `name` and `marketname` only take effect in **full mode** (affect SystemProperties)
+- `name` field spoofs both `ro.product.name` and `ro.product.device` in full mode
+- `characteristics` field only takes effect in **full mode**
+- `android_version` and `sdk_int` take effect in **all modes**
+- In **lite mode**, only `manufacturer`, `brand`, `model`, `device`, `product`, `fingerprint`, `android_version`, `sdk_int` take effect
+
+## Android Version Spoofing (New Feature)
+
+All modes support Android version and SDK version spoofing:
+
+```toml
+# Template example: Spoof as Android 15
+[templates.android_15]
+packages = ["com.app.needs.android15"]
+manufacturer = "Google"
+brand = "google"
+model = "Pixel 9 Pro"
+android_version = "15"
+sdk_int = 35
+
+# App example: Spoof as older Android
+[[apps]]
+package = "com.needs.old.android"
+mode = "lite"  # Lite mode is also supported!
+android_version = "13"
+sdk_int = 33
+```
+
+**Properties Modified by Version Spoofing**:
+
+| Mode | Build.VERSION Fields | System Properties |
+|------|-------------------|----------|
+| lite | `RELEASE`, `SDK_INT` | ❌ |
+| full | `RELEASE`, `SDK_INT` | `ro.build.version.release`, `ro.build.version.sdk` etc. |
+| resetprop | `RELEASE`, `SDK_INT` | `ro.build.version.release`, `ro.build.version.sdk` etc. |
+
+**Complete System Property List** (full/resetprop modes):
+- `ro.build.version.release`
+- `ro.system.build.version.release`
+- `ro.vendor.build.version.release`
+- `ro.product.build.version.release`
+- `ro.build.version.sdk`
+- `ro.system.build.version.sdk`
+- `ro.vendor.build.version.sdk`
+- `ro.product.build.version.sdk`
+
+## Custom Properties (New Feature)
+
+**full/resetprop modes** both support custom properties, allowing setting any system property:
+
+```toml
+[[apps]]
+package = "com.custom.app"
+mode = "resetprop"
+manufacturer = "Custom"
+
+# Custom properties
+[apps.custom_props]
+"ro.custom.property" = "custom_value"
+"ro.another.prop" = "another_value"
+```
+
+### Special Marker Values
+
+Support using special marker values to perform special operations:
+
+| Marker Value | Meaning | Example |
+|--------|------|------|
+| Regular string | Set to that value | `"ro.prop" = "value"` |
+| `""` or omitted | Do not modify (keep original) | `brand = ""` |
+| `"__EMPTY__"` | Set to empty string | `brand = "__EMPTY__"` |
+| `"__DELETE__"` | Delete property | `model = "__DELETE__"` |
+
+**Example**:
+
+```toml
+[[apps]]
+package = "com.example.app"
+mode = "resetprop"
+manufacturer = "Google"
+brand = "__EMPTY__"           # Set brand to empty string
+model = "__DELETE__"          # Delete model property
+
+# Custom properties also support special markers
+[apps.custom_props]
+"ro.custom.flag" = "enabled"
+"ro.debug.mode" = "__DELETE__"
+"ro.empty.value" = "__EMPTY__"
+```
 
 ## Mode Comparison
 
-| Feature | lite Mode ⭐ | full Mode | resetprop Mode |
-|---------|-------------|-----------|----------------|
+| Feature | Lite Mode ⭐ | Full Mode | Resetprop Mode |
+|------|-------------|-----------|----------------|
 | Build Class Spoofing | ✅ | ✅ | ✅ |
 | SystemProperties Spoofing | ❌ | ✅ | ✅ |
+| Characteristics Spoofing | ❌ | ✅ | ❌ |
 | Read-only Property Modification | ❌ | ❌ | ✅ |
+| Custom Properties | ❌ | ✅ | ✅ |
+| Property Emptying/Deletion | ❌ | ✅ | ✅ |
+| Android Version Spoofing | ✅ | ✅ | ✅ |
+| SDK Version Spoofing | ✅ | ✅ | ✅ |
 | Module Unloadable | ✅ | ❌ | ❌ |
-| Stealth | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
-| Detection Risk | Very Low | Relatively Low | Relatively Low |
-| Recommendation | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
+| Stealth | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
+| Detection Risk | Very Low | Lower | Lower |
+| Recommendation | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
 
 ## How to Choose a Mode?
 
-### Recommended Strategy
-
-1. **Default to lite mode** - Covers 90% of scenarios
-2. **Test the application** - See if it works normally
-3. **If not** - Switch to full mode
-
-### Judgment Criteria
+### Decision Basis
 
 **Use lite mode**:
-- ✅ Most applications
-- ✅ Pursuing stealth
+- ✅ Most apps
+- ✅ Pursuing stealthiness
 - ✅ Don't want to be detected
 
 **Use full mode**:
-- Application reads SystemProperties
-- Can still detect real device model in lite mode
-- Don't mind being detected by the module
+- App reads SystemProperties
+- Can still detect real device in lite mode
+- Need to spoof characteristics (e.g., QQ tablet mode)
+- Need custom properties
 
 **Use resetprop mode**:
-- Need to modify `ro.build.characteristics` (such as QQ tablet mode)
+- Need to modify read-only properties
+- Need to delete or empty certain properties
+- Need complete custom property support
